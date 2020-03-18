@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Metrics</title>
+    <script type="text/javascript">
+        // class Canvas
+        function Canvas(ctx) {
+            this.ctx = ctx;
+            this.height = ctx.canvas.height;
+            this.width = ctx.canvas.width;
+        }
+
+        Canvas.prototype.drawLine = function (x, y, width, height) {
+            this.ctx.moveTo(x, y);
+            this.ctx.lineTo(width, height);
+            this.ctx.stroke();
+        }
+
+        Canvas.prototype.drawCurve = function (points, f, t) {
+
+            function gradient(a, b) {
+                return (b.y - a.y) / (b.x - a.x);
+            }
+
+            if (typeof (f) == 'undefined') f = 0.3;
+            if (typeof (t) == 'undefined') t = 0.6;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(points[0].x, points[0].y);
+
+            var m = 0;
+            var dx1 = 0;
+            var dy1 = 0;
+
+            var preP = points[0];
+            for (var i = 1; i < points.length; i++) {
+
+                this.ctx.fillStyle = "red";
+                this.ctx.fillRect(points[i].x - 3, points[i].y - 3, 6, 6);
+
+                var curP = points[i];
+                nexP = points[i + 1];
+                if (nexP) {
+                    m = gradient(preP, nexP);
+                    dx2 = (nexP.x - curP.x) * -f;
+                    dy2 = dx2 * m * t;
+                } else {
+                    dx2 = 0;
+                    dy2 = 0;
+                }
+                this.ctx.bezierCurveTo(preP.x - dx1, preP.y - dy1, curP.x + dx2, curP.y + dy2, curP.x, curP.y);
+                dx1 = dx2;
+                dy1 = dy2;
+                preP = curP;
+            }
+            this.ctx.stroke();
+        }
+
+        Canvas.prototype.drawChart = function (name, values, color) {
+
+            this.ctx.fillStyle = "white";
+            this.ctx.fillRect(0, 0, this.width, this.height);
+
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = "grey";
+            this.ctx.setLineDash([5]);
+            this.ctx.lineWidth = 2;
+            for (var i = 25; i < this.height; i += 50) {
+                this.drawLine(0, i, this.width, i);
+            }
+
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = "grey";
+            this.ctx.setLineDash([5]);
+            this.ctx.lineWidth = 2;
+            for (var i = 25; i < this.width; i += 50) {
+                this.drawLine(i, 0, i, this.height);
+            }
+
+            this.ctx.font = "bold 8pt Courier";
+            this.ctx.fillStyle = "black";
+            this.ctx.fillText(name + " = " + values[values.length - 1], 10, 10);
+
+            var max = Math.max.apply(null, values) + 1;
+            max += max >>> 1;
+
+            var step = (this.width / values.length);
+
+            var points = [];
+
+            for (var i = 0; i < values.length; i++) {
+                var x = i * step;
+                var y = this.height - values[i] * this.height / max;
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y, step - 2, values[i] * this.height / max);
+                points.push({
+                    x: x + (step >>> 1),
+                    y: y
+                });
+            }
+
+            this.ctx.beginPath();
+            this.ctx.setLineDash([0]);
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = "red";
+            this.drawCurve(points, 0.3, 1);
+        }
+
+        // class Dashboard
+        function Dashboard(palette) {
+            this.palette = palette;
+            this.canvases = Object.create(null);
+            this.values = Object.create(null);
+            this.colors = Object.create(null);
+        }
+
+        Dashboard.prototype.createMetric = function (name) {
+            canvas = document.createElement("canvas");
+            canvas.style.border = "1px solid black";
+            canvas.width = 500;
+            canvas.height = 300;
+            document.body.appendChild(canvas);
+            this.canvases[name] = new Canvas(canvas.getContext("2d"));
+
+            var values = new Array(50);
+            values.fill(0);
+            this.values[name] = values;
+
+            var color = this.palette.shift();
+            this.colors[name] = color;
+            this.palette.push(color);
+        }
+
+        Dashboard.prototype.update = function (metrics) {
+            var self = this;
+
+            metrics
+                .split("\n")
+                .filter(function (e) {
+                    return e.length > 0 && e.charAt(0) !== "#";
+                })
+                .map(
+                    function (line) {
+
+                        var arr = line.split(" ");
+                        var name = arr[0];
+                        var value = +arr[1];
+
+                        if (!self.values[name]) {
+                            self.createMetric(name);
+                        }
+
+                        var values = self.values[name];
+                        values.shift();
+                        values.push(value);
+
+                        self.canvases[name].drawChart(name, values, self.colors[name]);
+                    });
+        }
+
+        Dashboard.prototype.error = function (err) {
+            for (var name in this.values) {
+
+                var values = this.values[name];
+                values.shift();
+                values.push(0);
+
+                this.canvases[name].drawChart(name, values, this.colors[name]);
+            }
+        }
+
+        // class Request
+        function Request(url) {
+            this.url = url;
+        }
+
+        Request.prototype.get = function (callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", this.url, true);
+            xhr.onload = function (e) {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        callback(null, xhr.responseText);
+                    } else {
+                        callback(xhr.statusText, null);
+                    }
+                }
+            }
+            xhr.onerror = function (e) {
+                callback(xhr.statusText, null);
+            };
+            xhr.send(null);
+        }
+
+        // main function
+        function main() {
+
+            var palette = [
+                "Indigo",
+                "Cyan",
+                "Blue",
+                "Green",
+                "DarkSeaGreen",
+                "DarkGoldenRod",
+                "DarkOrange",
+                "LightPink"
+            ];
+
+            var request = new Request(`${url}`);
+
+            var dashboard = new Dashboard(palette);
+
+            function update() {
+                request.get(
+                    function (err, result) {
+                        return result ? dashboard.update(result) : dashboard.error(err);
+                    });
+            }
+
+            setInterval(update, 1000);
+        }
+    </script>
+</head>
+
+<body onload="main();">
+</body>
+
+</html>

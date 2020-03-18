@@ -1,0 +1,27 @@
+{
+  "name": "eyebeam",
+  "version": "0.0.1",
+  "description": "Prometheus dashboard",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prestart": "cp src/*.html dist/",
+    "build": "tsc",
+    "example": "node example/server.js"
+  },
+  "keywords": [
+    "prometheus"
+  ],
+  "devDependencies": {
+    "@types/node": "^13.1.8",
+    "ts-node": "^8.6.2",
+    "tslint": "^6.0.0",
+    "typescript": "^3.7.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https@github.com:YaroslavGaponov/eyebeam.git"
+  },
+  "author": "Yaroslav Gaponov",
+  "license": "ISC"
+}
