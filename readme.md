@@ -7,6 +7,12 @@ Dashboard for prometheus metrics
 
 ## Example
 
+
+### Result
+
+![example](https://github.com/YaroslavGaponov/eyebeam/blob/master/example/eyebeam.gif?raw=true "eyebeam")
+
+
 ### Simple express server with prometheus metrics
 
 ```js
@@ -40,9 +46,4 @@ app.listen(PORT, () => {
 ```
 npm run example
 ```
-
-### Result
-
-![example](https://raw.githubusercontent.com/YaroslavGaponov/eyebeam/master/example/eyebeam.gif "eyebeam")
-
 
