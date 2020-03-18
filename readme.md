@@ -18,7 +18,7 @@ Dashboard for prometheus metrics
 ```js
 const express = require('express');
 const { collectDefaultMetrics, register } = require('prom-client');
-const eyebeam = require('eyebeam');
+const eyebeam = require('../dist');
 
 const PORT = 3000;
 
@@ -30,10 +30,11 @@ app.get('/', (req, res) => res.send('Hello World!'));
 
 app.get('/metrics', (req, res) => {
     res.setHeader('Content-Type', register.contentType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(register.metrics());
 });
 
-app.get('/eyebeam', eyebeam.handler(`http://localhost:${PORT}/metrics`));
+app.get('/eyebeam', eyebeam.handler(`/metrics`, 1500));
 
 app.listen(PORT, () => {
     console.log(`Express server http://localhost:${PORT}`);

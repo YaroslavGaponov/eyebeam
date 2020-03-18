@@ -208,7 +208,7 @@
                 "LightPink"
             ];
 
-            var request = new Request(`${url}`);
+            var request = new Request("${url}".startsWith("http") ? "${url}" : location.origin + "${url}");
 
             var dashboard = new Dashboard(palette);
 
@@ -219,7 +219,7 @@
                     });
             }
 
-            setInterval(update, 1000);
+            setInterval(update, +"${interval}");
         }
     </script>
 </head>

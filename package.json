@@ -1,6 +1,6 @@
 {
   "name": "eyebeam",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Prometheus dashboard",
   "main": "dist/index.js",
   "scripts": {
