@@ -1,5 +1,5 @@
 export interface EyebeamSettings {
     url: string;
-    interval?: number;
+    interval: number;
     [key: string]: any;
 }
